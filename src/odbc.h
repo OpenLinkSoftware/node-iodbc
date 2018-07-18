@@ -102,6 +102,9 @@ class ODBC : public Nan::ObjectWrap {
   public:
     static NAN_METHOD(New);
 
+    static uint16_t* conv_U4ToU2(void* s, int slen = SQL_NTS);
+    static uint32_t* conv_StringToU4(Local<String> s);
+
     //async methods
     static NAN_METHOD(CreateConnection);
   protected:

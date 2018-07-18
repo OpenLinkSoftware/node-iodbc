@@ -29,7 +29,7 @@ void* LoadSharedLibrary(char *pcDllname, int iMode = 2)
   void* handle = dlopen(sDllName.c_str(),iMode);
   
   if (!handle) {
-    printf("node-odbc: error loading ODBC library: %s\n", dlerror());
+    printf("node-iodbc: error loading ODBC library: %s\n", dlerror());
   }
   
   return handle;
@@ -43,7 +43,7 @@ void* GetFunction(void *Lib, char *Fnname)
 #elif defined(__GNUC__) // GNU compiler
   void * tmp = dlsym(Lib, Fnname);
   if (!tmp) {
-    printf("node-odbc: error loading function: %s\n", Fnname);
+    printf("node-iodbc: error loading function: %s\n", Fnname);
   }
   return tmp;
 #endif

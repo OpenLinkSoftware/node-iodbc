@@ -19,7 +19,7 @@
       'conditions' : [
         [ 'OS == "linux"', {
           'libraries' : [ 
-            '-lodbc' 
+            '-liodbc' 
           ],
           'cflags' : [
             '-g'
@@ -31,7 +31,7 @@
           ],
           'libraries' : [
             '-L/usr/local/lib',
-            '-lodbc' 
+            '-liodbc' 
           ]
         }],
         [ 'OS=="win"', {

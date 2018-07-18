@@ -795,6 +795,52 @@ Local<Object> ODBC::GetSQLError (SQLSMALLINT handleType, SQLHANDLE handle) {
     (char *) "[node-odbc] SQL_ERROR"));
 }
 
+
+uint16_t* ODBC::conv_U4ToU2(void* s, int slen)
+{
+  uint32_t* src = (uint32_t*) s;
+  uint16_t* dst = (uint16_t*) s;
+
+  if (slen == SQL_NTS) {
+    while(*src) {
+      *dst = (uint16_t) *src;
+      dst++;
+      src++;
+    }
+  } else {
+    for(int i=0; i < slen; i++) {
+      *dst = (uint16_t) *src;
+      dst++;
+      src++;
+    }
+  }
+  *dst = 0;
+
+  return (uint16_t*)s;
+}
+
+uint32_t* ODBC::conv_StringToU4(Local<String> s)
+{
+  size_t len = s->Length();
+  void *data = calloc((len+1), sizeof(uint32_t));
+
+  if (data) {
+    s->Write((uint16_t*)data);
+
+    uint32_t* u4 = (uint32_t*) data;
+    uint16_t* u2 = (uint16_t*) data;
+
+    for(int i=len-1; i>=0; i--) {
+      u4[i] = (uint32_t) u2[i];
+    }
+    
+  }
+
+  return (uint32_t*)data;
+}
+
+
+
 Local<Object> ODBC::GetSQLError (SQLSMALLINT handleType, SQLHANDLE handle, char* message) {
   Nan::EscapableHandleScope scope;
   
@@ -808,7 +854,7 @@ Local<Object> ODBC::GetSQLError (SQLSMALLINT handleType, SQLHANDLE handle, char*
   SQLSMALLINT len;
   SQLINTEGER statusRecCount;
   SQLRETURN ret;
-  char errorSQLState[14];
+  char errorSQLState[(SQL_SQLSTATE_SIZE+1)*4];
   char errorMessage[ERROR_MESSAGE_BUFFER_BYTES];
 
   ret = SQLGetDiagField(
@@ -828,7 +874,9 @@ Local<Object> ODBC::GetSQLError (SQLSMALLINT handleType, SQLHANDLE handle, char*
   
   for (i = 0; i < statusRecCount; i++){
     DEBUG_PRINTF("ODBC::GetSQLError : calling SQLGetDiagRec; i=%i, statusRecCount=%i\n", i, statusRecCount);
-    
+
+    memset(errorSQLState, 0, sizeof(errorSQLState));
+
     ret = SQLGetDiagRec(
       handleType, 
       handle,
@@ -842,7 +890,13 @@ Local<Object> ODBC::GetSQLError (SQLSMALLINT handleType, SQLHANDLE handle, char*
     DEBUG_PRINTF("ODBC::GetSQLError : after SQLGetDiagRec; i=%i\n", i);
 
     if (SQL_SUCCEEDED(ret)) {
+#ifdef UNICODE
+      DEBUG_PRINTF("ODBC::GetSQLError : errorMessage=%S, errorSQLState=%S\n", errorMessage, errorSQLState);
+      conv_U4ToU2(errorMessage);
+      conv_U4ToU2(errorSQLState);
+#else
       DEBUG_PRINTF("ODBC::GetSQLError : errorMessage=%s, errorSQLState=%s\n", errorMessage, errorSQLState);
+#endif
       
       if (i == 0) {
         // First error is assumed the primary error

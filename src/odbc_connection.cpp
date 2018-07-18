@@ -199,8 +199,7 @@ NAN_METHOD(ODBCConnection::Open) {
   //copy the connection string to the work data  
 #ifdef UNICODE
   data->connectionLength = connection->Length() + 1;
-  data->connection = (uint16_t *) malloc(sizeof(uint16_t) * data->connectionLength);
-  connection->Write((uint16_t*) data->connection);
+  data->connection = ODBC::conv_StringToU4(connection);
 #else
   data->connectionLength = connection->Utf8Length() + 1;
   data->connection = (char *) malloc(sizeof(char) * data->connectionLength);
